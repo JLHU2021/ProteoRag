@@ -14,7 +14,10 @@
       "Bash(echo *)",
       "Bash(done)",
       "Bash(git init *)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)"
     ]
   },
   "$version": 4

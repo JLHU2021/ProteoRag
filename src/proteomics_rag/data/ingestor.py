@@ -50,6 +50,9 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     Uses a sliding window approach but tries to split on sentence/paragraph
     boundaries to avoid cutting biological terms mid-word.
     """
+    if not text.strip():
+        return []
+
     # Split on paragraph boundaries first
     paragraphs = re.split(r"\n\s*\n", text)
     chunks: list[str] = []
@@ -81,15 +84,26 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     if current:
         chunks.append(current)
 
-    # Apply overlap by merging boundary chunks
-    if overlap > 0 and len(chunks) > 1:
-        overlapped = [chunks[0]]
-        for i in range(1, len(chunks)):
-            boundary = " ".join(chunks[i - 1].split()[-overlap // 2:] + chunks[i].split()[:overlap // 2])
-            overlapped.append(chunks[i])
-        return overlapped
+    # Final pass: enforce hard chunk_size limit on any remaining oversized chunks
+    final_chunks: list[str] = []
+    for chunk in chunks:
+        if len(chunk) <= chunk_size:
+            final_chunks.append(chunk)
+        else:
+            # Hard split by words
+            words = chunk.split()
+            sub = ""
+            for word in words:
+                if len(sub) + len(word) + 1 <= chunk_size:
+                    sub += " " + word if sub else word
+                else:
+                    if sub:
+                        final_chunks.append(sub)
+                    sub = word
+            if sub:
+                final_chunks.append(sub)
 
-    return chunks
+    return final_chunks
 
 
 def load_csv_table(path: Path) -> Iterator[DocumentChunk]:

@@ -8,6 +8,7 @@ Uses a lightweight LLM-based classifier with rule-based fallback.
 
 import logging
 import re
+from pathlib import Path
 
 import duckdb
 
@@ -89,14 +90,29 @@ class SQLRouter:
         """
         query_lower = query.lower()
 
-        # "How many SNO sites have fold change greater than X?"
+        # "How many sites have fold change greater than X?"
         m = re.search(
-            r"how many.*(?:site|protein).*(?:greater than|above|>\s*)(\d+\.?\d*)",
+            r"(?:how many|count).*?(?:site|protein)?.*?"
+            r"(?:fold change|fc).*?"
+            r"(?:greater than|above|more than|>|exceed).*?"
+            r"(\d+\.?\d*)",
             query_lower,
         )
         if m:
             threshold = m.group(1)
             return f"SELECT COUNT(*) FROM ptm_sites WHERE fold_change > {threshold}"
+
+        # "List proteins with fold change above X"
+        m = re.search(
+            r"(?:list|show).*?protein.*?"
+            r"(?:fold change|fc).*?"
+            r"(?:greater than|above|more than|>|exceed).*?"
+            r"(\d+\.?\d*)",
+            query_lower,
+        )
+        if m:
+            threshold = m.group(1)
+            return f"SELECT DISTINCT protein_name FROM ptm_sites WHERE fold_change > {threshold}"
 
         # "List proteins with fold change above X"
         m = re.search(
