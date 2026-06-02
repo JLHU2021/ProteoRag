@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Environments
+.venv/
+.env
+.env.local
+
+# Data & models (track via DVC or release artifacts, not git)
+data/raw/
+data/processed/
+data/index/
+*.faiss
+*.faiss.index
+*.duckdb
+*.duckdb.wal
+models/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/*.ipynb_checkpoints
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

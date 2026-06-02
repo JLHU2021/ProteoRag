@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sudo *)",
+      "Bash(python3 *)",
+      "Bash(pip install *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(cat)",
+      "Bash(\"\"\"proteorag — domain-adapted rag for proteomics literature and ptm datasets.\"\"\")",
+      "Bash(__version__ *)",
+      "Bash(eof)",
+      "Bash(do)",
+      "Bash(echo *)",
+      "Bash(done)",
+      "Bash(git init *)",
+      "Bash(true)"
+    ]
+  },
+  "$version": 4
+}
