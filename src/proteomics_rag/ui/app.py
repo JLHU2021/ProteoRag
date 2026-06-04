@@ -7,15 +7,24 @@ Provides a clean web interface where users can:
 - View retrieval metadata (route, scores, sources)
 """
 
+import os
 import logging
 from pathlib import Path
+
+# Suppress noisy third-party logs before any imports
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+os.environ.setdefault("DISABLE_SAFETENSORS_CONVERSION", "1")
+for _name in ("transformers", "sentence_transformers", "httpx", "httpcore", "openai"):
+    logging.getLogger(_name).setLevel(logging.ERROR)
 
 import streamlit as st
 
 from proteomics_rag.chain.pipeline import ProteoRAGChain
 from proteomics_rag.config import PROJECT_ROOT
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # ── Page config ──────────────────────────────────────────────────────
@@ -83,6 +92,8 @@ for msg in st.session_state.messages:
 
 # Query input
 if question := st.chat_input("Ask a proteomics question..."):
+    print(f"\n{'='*60}\n[UI] Received question: {question}\n{'='*60}", flush=True)
+    
     # Add user message
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user"):
@@ -90,33 +101,45 @@ if question := st.chat_input("Ask a proteomics question..."):
 
     # Generate response
     with st.chat_message("assistant"):
-        with st.spinner("Searching proteomics literature..."):
-            result = chain.query(question)
+        try:
+            print("[UI] Starting query...", flush=True)
+            with st.spinner("Searching proteomics literature..."):
+                result = chain.query(question)
+            
+            print(f"[UI] Query completed. Route: {result['route']}", flush=True)
 
-        # Show answer
-        st.markdown(result["answer"])
+            # Show answer
+            st.markdown(result["answer"])
 
-        # Show route badge
-        if result["route"] == "sql":
-            st.info("📊 Answered via structured SQL query")
-        else:
-            st.success(f"🔍 Answered via RAG ({len(result['sources'])} sources)")
+            # Show route badge
+            if result["route"] == "sql":
+                st.info("📊 Answered via structured SQL query")
+            else:
+                st.success(f"🔍 Answered via RAG ({len(result['sources'])} sources)")
 
-        # Show sources
-        if result["sources"]:
-            with st.expander("📚 Sources", expanded=True):
-                for src in result["sources"]:
-                    st.markdown(
-                        f"- **{src['source']}** (id: `{src['chunk_id']}`, "
-                        f"score: {src['score']:.4f})"
-                    )
+            # Show sources
+            if result["sources"]:
+                with st.expander("📚 Sources", expanded=True):
+                    for src in result["sources"]:
+                        st.markdown(
+                            f"- **{src['source']}** (id: `{src['chunk_id']}`, "
+                            f"score: {src['score']:.4f})"
+                        )
 
-        # Save to history
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": result["answer"],
-            "sources": result["sources"],
-        })
+            # Save to history
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": result["answer"],
+                "sources": result["sources"],
+            })
+        except Exception as e:
+            error_msg = f"❌ Error: {e}"
+            st.error(error_msg)
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": error_msg,
+                "sources": [],
+            })
 
 # ── Footer ───────────────────────────────────────────────────────────
 st.markdown("---")

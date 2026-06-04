@@ -14,7 +14,7 @@ from typing import Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from proteomics_rag.config import GOOGLE_API_KEY, ANTHROPIC_API_KEY, LLM_PROVIDER
+from proteomics_rag.config import GOOGLE_API_KEY, ANTHROPIC_API_KEY, DASHSCOPE_API_KEY, LLM_PROVIDER, LLM_MODEL
 from proteomics_rag.retrieval.hybrid import HybridRetriever
 from proteomics_rag.retrieval.router import SQLRouter, is_sql_query
 
@@ -36,9 +36,24 @@ Question: {question}
 """
 
 
-def _build_llm(provider: str = LLM_PROVIDER):
+def _build_llm(provider: str = LLM_PROVIDER, model: str = LLM_MODEL):
     """Build the LLM component based on configured provider."""
-    if provider == "gemini":
+    if provider == "dashscope":
+        if not DASHSCOPE_API_KEY:
+            raise ValueError("DASHSCOPE_API_KEY not set in .env")
+        try:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=model,
+                api_key=DASHSCOPE_API_KEY,
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+                temperature=0.1,
+            )
+        except ImportError:
+            raise ImportError(
+                "Install langchain-openai: pip install langchain-openai"
+            )
+    elif provider == "gemini":
         if not GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY not set in .env")
         try:
@@ -86,7 +101,7 @@ class ProteoRAGChain:
             return
         logger.info("Loading ProteoRAG chain...")
         self.retriever.load()
-        self._llm = _build_llm()
+        self._llm = _build_llm(model=LLM_MODEL)
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
             ("human", "{question}"),

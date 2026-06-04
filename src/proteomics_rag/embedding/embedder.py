@@ -30,7 +30,7 @@ class Embedder:
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Loading embedding model: {model_name} on {device}")
-        self.model = SentenceTransformer(model_name, device=device)
+        self.model = SentenceTransformer(model_name, device=device, local_files_only=True)
         self.dim = EMBEDDING_DIM
 
     def encode(self, texts: list[str], batch_size: int = 32) -> np.ndarray:

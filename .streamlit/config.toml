@@ -1,0 +1,10 @@
+[server]
+runOnSave = false
+headless = true
+fileWatcherType = "none"
+
+[runner]
+magicEnabled = false
+
+[logger]
+level = "debug"

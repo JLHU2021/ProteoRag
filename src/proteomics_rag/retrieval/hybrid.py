@@ -74,7 +74,7 @@ class Reranker:
     def __init__(self, model_name: str = RERANKER_MODEL):
         logger.info(f"Loading reranker: {model_name}")
         print(f"Loading reranker model: {model_name} (this may take a moment on first run)...")
-        self.model = CrossEncoder(model_name)
+        self.model = CrossEncoder(model_name, local_files_only=True)
 
     def rerank(
         self,
@@ -206,7 +206,18 @@ class HybridRetriever:
 
     def _build_id_to_text_map(self) -> dict[str, tuple[str, str]]:
         """Build a mapping from chunk_id to (text, source)."""
-        return {}  # Populated at build time from chunk store
+        import json
+        from proteomics_rag.config import DATA_INDEX
+
+        chunk_store_path = DATA_INDEX / "chunk_store.json"
+        if not chunk_store_path.exists():
+            logger.warning(f"Chunk store not found at {chunk_store_path}")
+            return {}
+
+        with open(chunk_store_path) as f:
+            chunks = json.load(f)
+
+        return {c["chunk_id"]: (c["text"], c["source"]) for c in chunks}
 
 
 if __name__ == "__main__":
