@@ -174,32 +174,32 @@ def init_duckdb(db_path: Path = DUCKDB_PATH) -> duckdb.DuckDBPyConnection:
     return conn
 
 
-def ingest_papers(paper_dir: Path = DATA_RAW) -> int:
+def ingest_papers(paper_dir: Path = DATA_RAW) -> list[dict]:
     """Ingest all papers and tables from the raw data directory.
 
-    Returns total number of chunks ingested.
+    Returns a list of chunk dicts ready for indexing.
     """
     conn = init_duckdb()
-    chunk_count = 0
+    chunks: list[dict] = []
 
     paper_dir.mkdir(parents=True, exist_ok=True)
     files = list(paper_dir.iterdir())
 
     if not files:
         print(f"No files found in {paper_dir}. Add PDFs, CSVs, or XMLs first.")
-        return 0
+        return []
 
     for f in tqdm(files, desc="Ingesting"):
         if f.suffix.lower() in (".csv", ".xlsx", ".xls"):
             for chunk in load_csv_table(f):
-                chunk_count += 1
+                chunks.append(chunk.to_dict())
         elif f.suffix.lower() == ".pdf":
             for chunk in load_pdf(f):
-                chunk_count += 1
+                chunks.append(chunk.to_dict())
 
     conn.close()
-    print(f"Ingested {chunk_count} chunks from {len(files)} files.")
-    return chunk_count
+    print(f"Ingested {len(chunks)} chunks from {len(files)} files.")
+    return chunks
 
 
 if __name__ == "__main__":

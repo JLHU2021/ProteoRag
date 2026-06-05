@@ -34,8 +34,8 @@ def main():
 
     # Step 1: Ingest
     logger.info("Step 1: Ingesting raw data...")
-    count = ingest_papers(DATA_RAW)
-    if count == 0:
+    chunks = ingest_papers(DATA_RAW)
+    if not chunks:
         logger.warning("No data ingested. Add files to data/raw/ and re-run.")
         logger.info("Creating a minimal test index with dummy data...")
         # Create dummy chunks so the system can at least run
@@ -83,29 +83,7 @@ def main():
         ]
         chunks = dummy_chunks
     else:
-        logger.info(f"Ingested {count} chunks. Proceeding to index build...")
-        # In a real scenario, we'd load chunks from the ingestion output
-        # For now, use dummy data as placeholder
-        chunks = []
-
-    # If no real data, use dummy
-    if not chunks:
-        chunks = [
-            {
-                "text": "S-nitrosylation (SNO) is a reversible post-translational modification "
-                "where nitric oxide (NO) covalently attaches to the thiol group of cysteine residues. "
-                "GAPDH is a well-characterized SNO target at Cys152.",
-                "chunk_id": "dummy_sno_0",
-                "source": "dummy_sno_knowledge.txt",
-            },
-            {
-                "text": "PRMT5 catalyzes symmetric dimethylation of arginine residues. "
-                "PRMT5 activity is regulated by S-nitrosylation. "
-                "Key substrates include STAT3, p53, and histone H4R3me2s.",
-                "chunk_id": "dummy_prmt5_0",
-                "source": "dummy_prmt5_knowledge.txt",
-            },
-        ]
+        logger.info(f"Ingested {len(chunks)} chunks. Proceeding to index build...")
 
     # Step 2: Build FAISS index
     logger.info("Step 2: Building FAISS index...")
